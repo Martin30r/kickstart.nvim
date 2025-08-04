@@ -102,7 +102,7 @@ vim.g.have_nerd_font = trueeo
 vim.o.number = true
 -- You can also add relative line numbers, to help with jumping.
 --  Experiment for yourself to see if you like it!
--- vim.o.relativenumber = true
+vim.o.relativenumber = true
 
 -- Enable mouse mode, can be useful for resizing splits for example!
 vim.o.mouse = 'a'
@@ -114,9 +114,10 @@ vim.o.showmode = false
 --  Schedule the setting after `UiEnter` because it can increase startup-time.
 --  Remove this option if you want your OS clipboard to remain independent.
 --  See `:help 'clipboard'`
-vim.schedule(function()
-  vim.o.clipboard = 'unnamedplus'
-end)
+-- NOTE: REMOVED (re-enable based on use case)
+-- vim.schedule(function()
+--   vim.o.clipboard = 'unnamedplus'
+-- end)
 
 -- Enable break indent
 vim.o.breakindent = true
@@ -159,7 +160,7 @@ vim.o.inccommand = 'split'
 vim.o.cursorline = true
 
 -- Minimal number of screen lines to keep above and below the cursor.
-vim.o.scrolloff = 10
+vim.o.scrolloff = 15
 
 -- if performing an operation that would fail due to unsaved changes in the buffer (like `:q`),
 -- instead raise a dialog asking if you wish to save the current file(s)
@@ -216,6 +217,33 @@ vim.api.nvim_create_autocmd('TextYankPost', {
   group = vim.api.nvim_create_augroup('kickstart-highlight-yank', { clear = true }),
   callback = function()
     vim.hl.on_yank()
+  end,
+})
+
+-- Trim trailing whitespace characters on BufWritePre event
+vim.api.nvim_create_autocmd('BufWritePre', {
+  group = vim.api.nvim_create_augroup('TrimWhitespace', { clear = true }),
+  callback = function()
+    -- Get the current buffer number
+    local bufnr = vim.api.nvim_get_current_buf()
+
+    -- Get all lines in the buffer
+    local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+
+    local changed = false
+    local new_lines = {}
+    for i, line in ipairs(lines) do
+      local trimmed_line = line:gsub('%s+$', '') -- Trim trailing whitespace
+      if trimmed_line ~= line then
+        changed = true
+      end
+      table.insert(new_lines, trimmed_line)
+    end
+
+    if changed then
+      -- Replace the buffer content with the trimmed lines
+      vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, new_lines)
+    end
   end,
 })
 
